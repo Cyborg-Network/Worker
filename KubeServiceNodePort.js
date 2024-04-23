@@ -4,6 +4,15 @@ const app = express();
 const fs = require('fs');
 app.use(express.json());
 
+function cleanUpFiles(files) {
+  // Function to clean up specified files
+  files.forEach((file) => {
+    if (fs.existsSync(file)) {
+      fs.unlinkSync(file);
+    }
+  });
+}
+
 app.post('/deploy', (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) {
@@ -11,6 +20,9 @@ app.post('/deploy', (req, res) => {
   }
 
   const deploymentName = `dynamic-deployment-${Math.random().toString(36).substring(7)}`;
+  const deploymentFile = `${deploymentName}.yaml`;
+  const serviceFile = `${deploymentName}-service.yaml`;
+
   const serviceYaml = `
 apiVersion: v1
 kind: Service
@@ -46,30 +58,40 @@ spec:
         image: ${imageUrl}
 `;
 
-  fs.writeFileSync(`${deploymentName}.yaml`, deploymentYaml);
-  fs.writeFileSync(`${deploymentName}-service.yaml`, serviceYaml);
+  fs.writeFileSync(deploymentFile, deploymentYaml);
+  fs.writeFileSync(serviceFile, serviceYaml);
 
-  exec(`kubectl apply -f ${deploymentName}.yaml && kubectl apply -f ${deploymentName}-service.yaml`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`exec error: ${error}`);
-      return res.status(500).send({ error: 'Deployment or Service creation failed' });
-    }
-    let nodePort;
-    try {
-      const getServiceCommand = `kubectl get svc ${deploymentName}-service -o=jsonpath='{.spec.ports[0].nodePort}'`;
-      nodePort = execSync(getServiceCommand).toString().trim();
-    } catch (error) {
-      console.error('Error fetching NodePort:', error);
-      return res.status(500).send({ error: 'Failed to fetch NodePort' });
-    }
+  exec(
+    `kubectl apply -f ${deploymentFile} && kubectl apply -f ${serviceFile}`,
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        cleanUpFiles([deploymentFile, serviceFile]); // Clean up files on error
+        return res.status(500).send({ error: 'Deployment or Service creation failed' });
+      }
 
-    console.log(`stdout: ${stdout}`);
-    console.error(`stderr: ${stderr}`);
-    res.send({ message: `Deployment ${deploymentName} and Service created`, nodePort: nodePort });
-  });
+      let nodePort;
+      try {
+        const getServiceCommand = `kubectl get svc ${deploymentName}-service -o=jsonpath='{.spec.ports[0].nodePort}'`;
+        nodePort = execSync(getServiceCommand).toString().trim();
+      } catch (err) {
+        console.error('Error fetching NodePort:', err);
+        cleanUpFiles([deploymentFile, serviceFile]); // Clean up files if NodePort retrieval fails
+        return res.status(500).send({ error: 'Failed to fetch NodePort' });
+      }
+
+      console.log(`stdout: ${stdout}`);
+      console.error(`stderr: ${stderr}`);
+
+      // Clean up files after successful deployment
+      cleanUpFiles([deploymentFile, serviceFile]);
+
+      res.send({ message: `Deployment ${deploymentName} and Service created`, nodePort });
+    }
+  );
 });
 
-const port = 3000;
+const port = 8000;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
