@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.3"
+    "express": "^4.18.3",
+    "@kubernetes/client-node": "^0.20.0",
+    "@polkadot/api": "^11.0.2"
   }
 }
