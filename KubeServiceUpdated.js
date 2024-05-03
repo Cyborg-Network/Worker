@@ -75,8 +75,24 @@ spec:
   );
 }
 
+app.get('/cluster-status', (req, res) => {
+  console.log("check k3s status: ", req.params);
+  //call k3s for status
+  
+  res.json({
+      deployment_status: true
+  })
+})
+
+
+// app.get("/deployment-status/:taskId", async (req, res) => {
+//   console.log("taskId: ", req.params)
+//   const { taskId } = req.params;
+//   console.log("taskId1: ", taskId)
+
 app.get("/deployment-status", async (req, res) => {
   const { taskId } = req.body;
+  console.log("taskId1: ", taskId)
   if (!taskId) {
     return res.status(400).send({ error: "No task ID provided" });
   }
@@ -129,25 +145,40 @@ app.get("/logs", async (req, res) => {
     res.status(500).send({ error: "Failed to fetch deployment" });
   }
 });
-
+// const wsProvider = new WsProvider("wss://rpc.polkadot.io");
+//  const wsProvider = new WsProvider("wss://127.0.0.1:9944");
 async function listenToSubstrateEvents() {
-  const wsProvider = new WsProvider("wss://73.114.168.51:9944");
-  const api = await ApiPromise.create({ provider: wsProvider });
-
+  console.log("Calling this now")
+  // const wsProvider = new WsProvider("wss://127.0.0.1:9944");
+  const api = await ApiPromise.create();
+  // const api = await ApiPromise.create({ provider: wsProvider });
+  // ApiPromise.create({ provider: wsProvider }).then(async (api) => {
+  //   const timestamp = await api.query.timestamp.now();
+  
+  //   console.log(`lastest block timestamp ${timestamp}`);
+  // });
+  const timestamp = await api.query.timestamp.now();
+  console.log(`lastest block timestamp ${timestamp}`);
   api.query.system
     .events((events) => {
+      // console.log("events: ", events)
       events.forEach((record) => {
         const { event } = record;
+        console.log("event.record: ", event.section);
+        console.log("extrinsic", event.method);
         if (
-          event.section === "WorkerRegistration" &&
+          event.section === "workerRegistration" &&
           event.method === "TaskScheduled"
         ) {
-          const { worker, owner, task_id, task } = event.data.toJSON();
+          const [ worker, owner, task_id, task, assigned_ip ] = event.data.toString();
+          console.log("task id and data from EVENTS: ", event.data.toString())
+          console.log("task id:: ", task_id, task)
           deploy(task_id, task);
         }
       });
     })
     .catch(console.error);
+  console.log("called after")
 }
 
 listenToSubstrateEvents().catch((error) => {
