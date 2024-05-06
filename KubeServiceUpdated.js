@@ -17,6 +17,8 @@ const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const k8sAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
 
 function deploy(taskId, imageUrl) {
+  console.log("taskId:", taskId);
+  console.log("imageUrl:", imageUrl);
   const deploymentName = `dynamic-deployment-${Math.random()
     .toString(36)
     .substring(7)}`;
@@ -75,24 +77,22 @@ spec:
   );
 }
 
-app.get('/cluster-status', (req, res) => {
+app.get("/cluster-status", (req, res) => {
   console.log("check k3s status: ", req.params);
-  //call k3s for status
-  
-  res.json({
-      deployment_status: true
-  })
-})
 
+  res.json({
+    deployment_status: true,
+  });
+});
 
 // app.get("/deployment-status/:taskId", async (req, res) => {
 //   console.log("taskId: ", req.params)
 //   const { taskId } = req.params;
 //   console.log("taskId1: ", taskId)
 
-app.get("/deployment-status", async (req, res) => {
-  const { taskId } = req.body;
-  console.log("taskId1: ", taskId)
+app.get("/deployment-status/:taskId", async (req, res) => {
+  const { taskId } = req.params;
+  console.log("taskId1: ", taskId);
   if (!taskId) {
     return res.status(400).send({ error: "No task ID provided" });
   }
@@ -118,8 +118,8 @@ app.get("/deployment-status", async (req, res) => {
   }
 });
 
-app.get("/logs", async (req, res) => {
-  const { taskId } = req.body;
+app.get("/logs/:taskId", async (req, res) => {
+  const { taskId } = req.params;
   if (!taskId) {
     return res.status(400).send({ error: "No task ID provided" });
   }
@@ -145,23 +145,14 @@ app.get("/logs", async (req, res) => {
     res.status(500).send({ error: "Failed to fetch deployment" });
   }
 });
-// const wsProvider = new WsProvider("wss://rpc.polkadot.io");
-//  const wsProvider = new WsProvider("wss://127.0.0.1:9944");
+
 async function listenToSubstrateEvents() {
-  console.log("Calling this now")
-  // const wsProvider = new WsProvider("wss://127.0.0.1:9944");
-  const api = await ApiPromise.create();
-  // const api = await ApiPromise.create({ provider: wsProvider });
-  // ApiPromise.create({ provider: wsProvider }).then(async (api) => {
-  //   const timestamp = await api.query.timestamp.now();
-  
-  //   console.log(`lastest block timestamp ${timestamp}`);
-  // });
-  const timestamp = await api.query.timestamp.now();
-  console.log(`lastest block timestamp ${timestamp}`);
+  console.log("Calling this now");
+  const wsProvider = new WsProvider("ws://65.108.229.2:9944");
+  //const api = await ApiPromise.create();
+  const api = await ApiPromise.create({ provider: wsProvider });
   api.query.system
     .events((events) => {
-      // console.log("events: ", events)
       events.forEach((record) => {
         const { event } = record;
         console.log("event.record: ", event.section);
@@ -170,15 +161,15 @@ async function listenToSubstrateEvents() {
           event.section === "workerRegistration" &&
           event.method === "TaskScheduled"
         ) {
-          const [ worker, owner, task_id, task, assigned_ip ] = event.data.toString();
-          console.log("task id and data from EVENTS: ", event.data.toString())
-          console.log("task id:: ", task_id, task)
+          const [worker, owner, task_id, task, assigned_ip] = event.data.map(
+            (e) => e.toString()
+          );
+
           deploy(task_id, task);
         }
       });
     })
     .catch(console.error);
-  console.log("called after")
 }
 
 listenToSubstrateEvents().catch((error) => {
