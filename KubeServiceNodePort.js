@@ -91,7 +91,7 @@ spec:
   );
 });
 
-const port = 8000;
+const port = 3000;
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Updated Server listening on port ${port}`);
 });
