@@ -148,7 +148,7 @@ app.get("/logs/:taskId", async (req, res) => {
 
 async function listenToSubstrateEvents() {
   console.log("Calling this now");
-  const wsProvider = new WsProvider("ws://65.108.229.2:9944");
+  const wsProvider = new WsProvider("wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network");
   //const api = await ApiPromise.create();
   const api = await ApiPromise.create({ provider: wsProvider });
   api.query.system
