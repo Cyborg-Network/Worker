@@ -3,9 +3,14 @@ const { exec, execSync } = require("child_process");
 const fs = require("fs");
 const k8s = require("@kubernetes/client-node");
 const app = express();
+const cors = require('cors');
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 
 app.use(express.json());
+
+app.use(cors({
+  origin: ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8000/cyborg-connect', 'http://localhost:8000/cyborg-connect', 'https://cyborg-network.github.io', 'https://cyborg-network.github.io/cyborg-connect']
+}));
 
 const deploymentMap = {};
 
