@@ -1,5 +1,5 @@
 const express = require("express");
-const { exec, execSync } = require("child_process");
+const { exec } = require("child_process");
 const fs = require("fs");
 const k8s = require("@kubernetes/client-node");
 const app = express();
@@ -148,6 +148,35 @@ app.get("/logs/:taskId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching deployment:", error);
     res.status(500).send({ error: "Failed to fetch deployment" });
+  }
+});
+
+app.get('/system-specs', async (req, res) => {
+  try {
+    const specs = {};
+    const executeCommand = (command) => {
+        return new Promise((resolve, reject) => {
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`${command} error: `, error);
+                    reject(error);
+                } else {
+                    resolve(stdout.trim());
+                }
+            });
+        });
+    };
+    specs.hostname = await executeCommand('hostname');
+    specs.operatingSystem = await executeCommand('lsb_release -a 2>/dev/null || cat /etc/os-release');
+    specs.kernelVersion = await executeCommand('uname -r');
+    specs.cpuInformation = await executeCommand('lscpu');
+    specs.memoryInformation = await executeCommand('free -h');
+    specs.diskUsage = await executeCommand('df -h');
+    specs.memoryInformation = await executeCommand('free -h');
+    res.json(specs);
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
