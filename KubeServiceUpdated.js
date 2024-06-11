@@ -5,6 +5,7 @@ const k8s = require("@kubernetes/client-node");
 const app = express();
 const cors = require('cors');
 const { ApiPromise, WsProvider } = require("@polkadot/api");
+const { formatOutput, formatMemOutput, formatDiskOutput } = require("./utils/formatter")
 
 app.use(express.json());
 
@@ -151,28 +152,47 @@ app.get("/logs/:taskId", async (req, res) => {
   }
 });
 
+const executeCommand = (command) => {
+  return new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+          if (error) {
+              console.error(`${command} error: `, error);
+              reject(error);
+          } else {
+              resolve(stdout.trim());
+          }
+      });
+  });
+};
+
 app.get('/system-specs', async (req, res) => {
   try {
     const specs = {};
-    const executeCommand = (command) => {
-        return new Promise((resolve, reject) => {
-            exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`${command} error: `, error);
-                    reject(error);
-                } else {
-                    resolve(stdout.trim());
-                }
-            });
-        });
-    };
     specs.hostname = await executeCommand('hostname');
-    specs.operatingSystem = await executeCommand('lsb_release -a 2>/dev/null || cat /etc/os-release');
     specs.kernelVersion = await executeCommand('uname -r');
-    specs.cpuInformation = await executeCommand('lscpu');
-    specs.memoryInformation = await executeCommand('free -h');
-    specs.diskUsage = await executeCommand('df -h');
-    specs.memoryInformation = await executeCommand('free -h');
+
+    const osInfo = await executeCommand('lsb_release -a 2>/dev/null || cat /etc/os-release');
+    specs.operatingSystem = formatOutput(osInfo)
+
+    res.json(specs);
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/consumption-metrics', async (req, res) => {
+  try {
+    const specs = {};
+    const cpuInfo = await executeCommand('lscpu');
+    const memInfo = await executeCommand('free -h');
+    const diskInfo = await executeCommand('df -h');
+
+    specs.cpuInformation = formatOutput(cpuInfo.trim())
+    specs.memoryInformation = formatMemOutput(memInfo.trim())
+    specs.diskUsage = formatDiskOutput(diskInfo.trim())
+   
+
     res.json(specs);
   } catch (error) {
       console.error('Error:', error);
