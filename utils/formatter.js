@@ -12,38 +12,29 @@ const formatOutput = (output) => {
     });
     return formatted
 }
+
+const formatCpuOutput = (output) => {
+    const cpuUsage = {};
+    const matches = output.match(/(\d+\.\d+)%id/);
+    if (matches) {
+        const idle = parseFloat(matches[1]);
+        cpuUsage.usage = (100 - idle).toFixed(2) + '%';
+    }
+    return cpuUsage;
+}
   
 const formatMemOutput = (output) => {
-    const memoryInfo = {};
+    const memoryUsage = {};
     const lines = output.split('\n');
-  
-    // Get the headers from the first line
-    const headers = lines[0].split(/\s+/).slice(1); // Remove the first 'header' entry which is usually empty
-    headers[0] = "total"; // The first header is usually "total", correcting it as per 'free' command
-  
-    // Parse the memory values from the second line
-    const memoryValues = lines[1].split(/\s+/);
-    const memoryType = memoryValues[0];
-    const memoryData = memoryValues.slice(1);
-  
-    // Create a memory object with the headers as keys and the corresponding values
-    memoryInfo[memoryType.toLowerCase()] = {};
-    headers.forEach((header, index) => {
-        memoryInfo[memoryType.toLowerCase()][header.toLowerCase()] = memoryData[index];
-    });
-  
-    // Parse the swap values from the third line, if it exists
-    if (lines[2]) {
-        const swapValues = lines[2].split(/\s+/);
-        const swapType = swapValues[0];
-        const swapData = swapValues.slice(1);
-  
-        memoryInfo[swapType.toLowerCase()] = {};
-        headers.forEach((header, index) => {
-            memoryInfo[swapType.toLowerCase()][header.toLowerCase()] = swapData[index];
-        });
-    }
-    return memoryInfo
+    const memLine = lines[1].split(/\s+/);
+    const totalMem = parseFloat(memLine[1]);
+    const usedMem = parseFloat(memLine[2]);
+
+    memoryUsage.total = totalMem + ' MB';
+    memoryUsage.used = usedMem + ' MB';
+    memoryUsage.usage = ((usedMem / totalMem) * 100).toFixed(2) + '%';
+
+    return memoryUsage;
 }
   
 const formatDiskOutput = (output) => {
@@ -63,5 +54,5 @@ const formatDiskOutput = (output) => {
     return diskInfo
 }
 
-module.exports = {formatOutput, formatMemOutput, formatDiskOutput}
+module.exports = {formatOutput, formatCpuOutput, formatMemOutput, formatDiskOutput}
   

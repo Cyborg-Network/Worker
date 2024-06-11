@@ -5,7 +5,7 @@ const k8s = require("@kubernetes/client-node");
 const app = express();
 const cors = require('cors');
 const { ApiPromise, WsProvider } = require("@polkadot/api");
-const { formatOutput, formatMemOutput, formatDiskOutput } = require("./utils/formatter")
+const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
 
 app.use(express.json());
 
@@ -174,6 +174,12 @@ app.get('/system-specs', async (req, res) => {
     const osInfo = await executeCommand('lsb_release -a 2>/dev/null || cat /etc/os-release');
     specs.operatingSystem = formatOutput(osInfo)
 
+    const cpuInfo = await executeCommand('lscpu');
+    specs.cpuInformation = formatOutput(cpuInfo.trim())
+
+    const localeInfo = await executeCommand('curl -s ipinfo.io');
+    specs.localeInformation = JSON.parse(localeInfo)
+
     res.json(specs);
   } catch (error) {
       console.error('Error:', error);
@@ -184,14 +190,14 @@ app.get('/system-specs', async (req, res) => {
 app.get('/consumption-metrics', async (req, res) => {
   try {
     const specs = {};
-    const cpuInfo = await executeCommand('lscpu');
-    const memInfo = await executeCommand('free -h');
-    const diskInfo = await executeCommand('df -h');
+    
+    const cpuUse = await executeCommand('top -bn1 | grep "Cpu(s)"');
+    const memUse = await executeCommand('free -m');
+    const diskUse = await executeCommand('df -h');
 
-    specs.cpuInformation = formatOutput(cpuInfo.trim())
-    specs.memoryInformation = formatMemOutput(memInfo.trim())
-    specs.diskUsage = formatDiskOutput(diskInfo.trim())
-   
+    specs.cpuUsage = formatCpuOutput(cpuUse.trim())
+    specs.memoryUsage = formatMemOutput(memUse.trim())
+    specs.diskUsage = formatDiskOutput(diskUse.trim())
 
     res.json(specs);
   } catch (error) {
