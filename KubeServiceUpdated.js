@@ -4,6 +4,9 @@ const fs = require("fs");
 const k8s = require("@kubernetes/client-node");
 const app = express();
 const cors = require('cors');
+const path = require('path');
+const https = require('https');
+
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
 
@@ -33,39 +36,39 @@ function deploy(taskId, imageUrl) {
   const filenameBase = deploymentName.replace(/[^a-zA-Z0-9-]/g, "");
 
   const serviceYaml = `
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${deploymentName}-service
-spec:
-  type: NodePort
-  selector:
-    app: ${deploymentName}
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-`;
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${deploymentName}-service
+    spec:
+      type: NodePort
+      selector:
+        app: ${deploymentName}
+      ports:
+        - protocol: TCP
+          port: 8080
+          targetPort: 8080
+    `;
 
   const deploymentYaml = `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ${deploymentName}
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ${deploymentName}
-  template:
+    apiVersion: apps/v1
+    kind: Deployment
     metadata:
-      labels:
-        app: ${deploymentName}
+      name: ${deploymentName}
     spec:
-      containers:
-      - name: ${deploymentName}-container
-        image: ${imageUrl}
-`;
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ${deploymentName}
+      template:
+        metadata:
+          labels:
+            app: ${deploymentName}
+        spec:
+          containers:
+          - name: ${deploymentName}-container
+            image: ${imageUrl}
+    `;
 
   fs.writeFileSync(`${filenameBase}.yaml`, deploymentYaml);
   fs.writeFileSync(`${filenameBase}-service.yaml`, serviceYaml);
@@ -138,8 +141,19 @@ app.get("/logs/:taskId", async (req, res) => {
         .send({ error: "Deployment not found for provided task ID" });
     }
 
-    const command = `kubectl logs -l app=${deploymentName} --all-containers=true`;
-    const logStream = exec(command);
+    const command = `kubectl logs -l app=${deploymentName} --all-containers=true --tail=100`;
+    const logStream = exec(command, (error, stdout, stderr) => {
+      console.log(`stdout: ${stdout}`);
+      if (error) {
+        console.error(`exec error: ${error}`);
+      } else {
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+      }
+    });
+
+    const test = await executeCommand(command)
+    console.log("testing:: ", test)
 
     logStream.stdout.pipe(res);
     logStream.on("error", (error) => {
@@ -237,6 +251,16 @@ listenToSubstrateEvents().catch((error) => {
 });
 
 const port = 3000;
+
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
+
+// const sslServer = https.createServer({
+//     key: fs.readFileSync(path.join(__dirname, 'cert', 'key.pem')),
+//     cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.pem')),
+//   },
+//   app
+// );
+
+// sslServer.listen(port, ()=> console.log(`Server listening on port ${port}`))
