@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon KubeServiceUpdated.js",
+    "pm2:start": "pm2 start npm --name 'cluster-one' -- run dev",
+    "pm2:stop": "pm2 stop 'cluster-one'",
+    "pm2:restart": "pm2 restart 'cluster-one'",
+    "pm2:delete": "pm2 delete 'cluster-one'",
+    "pm2:logs": "pm2 logs 'cluster-one'"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +21,8 @@
     "cors": "^2.8.5",
     "express": "^4.18.3",
     "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
   }
 }
