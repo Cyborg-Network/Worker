@@ -6,6 +6,10 @@ const app = express();
 const cors = require('cors');
 const path = require('path');
 const https = require('https');
+require('dotenv').config();
+
+const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '';
+const NODE_RPC = process.env.RPC_ENDPOINT || '';
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
@@ -222,7 +226,9 @@ app.get('/consumption-metrics', async (req, res) => {
 
 async function listenToSubstrateEvents() {
   console.log("Calling this now");
-  const wsProvider = new WsProvider("wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network");
+  // const wsProvider = new WsProvider("wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network");
+  console.log('node: ',NODE_RPC)
+  const wsProvider = new WsProvider(NODE_RPC);
   //const api = await ApiPromise.create();
   const api = await ApiPromise.create({ provider: wsProvider });
   api.query.system
@@ -232,14 +238,20 @@ async function listenToSubstrateEvents() {
         console.log("event.record: ", event.section);
         console.log("extrinsic", event.method);
         if (
-          event.section === "workerRegistration" &&
+          event.section === "taskManagement" &&
           event.method === "TaskScheduled"
         ) {
-          const [worker, owner, task_id, task, assigned_ip] = event.data.map(
-            (e) => e.toString()
+          const [assigned_worker, task_owner, task_id, task] = event.data.map(
+            (e) => e.toHuman()
           );
-
-          deploy(task_id, task);
+          const worker_addr = assigned_worker[0];
+          console.log({worker_addr, task_owner, task_id, task})
+          console.log("Matches account check: ", worker_addr === WORKER_ADDRESS, worker_addr, WORKER_ADDRESS)
+          if (worker_addr == WORKER_ADDRESS) {
+            console.log("Matches account!")
+            deploy(task_id, task);
+          }
+          // deploy(task_id, task);
         }
       });
     })
