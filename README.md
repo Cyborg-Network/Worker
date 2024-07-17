@@ -33,8 +33,7 @@ Starts the Node.js application that listens for deployment requests on port 3000
 After setting up the master node, add worker nodes to the cluster using the join token.
 
 #### Networking Considerations: 
-Please ensure the master and worker nodes are in the same network (alpha)
-Also update the IP address of the server running the parachain node in the ENV file of the cloned local Worker repository
+Please ensure the master and worker nodes are in the same network (alpha), also update the IP address of the server running the parachain node in the ENV file of the cloned local Worker repository
 
 #### 1. Execute Worker Setup Script
 On each worker node, run the WorkerSetup.sh script with the worker's name, master node's private IP address, and the join token present in the `k3s-node-token.txt` file:
