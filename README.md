@@ -9,7 +9,7 @@ Ensure you have the following prerequisites on your master and worker nodes:
 
 ### Environment
 
-Make sure to copy the `.env.example` and replace the contents `WORKER_ADDRESS` to the address you register this worker on the Cyborg Network chain and `RPC_ENDPOINT` to the correct rpc endpoint of the chain you are testing on.
+Make sure to copy the `.env.example` and replace the contents `WORKER_ADDRESS` to the address you register this worker on the Cyborg Network chain and `RPC_ENDPOINT` to the correct rpc endpoint of the chain you are testing on. The example WORKER_ADDRESS is set to the Alice default test account. 
 
 ```
 cp .env.example .env

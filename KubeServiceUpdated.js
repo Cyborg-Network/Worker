@@ -9,7 +9,7 @@ const https = require('https');
 require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '';
-const NODE_RPC = process.env.RPC_ENDPOINT || '';
+const NODE_RPC = process.env.RPC_ENDPOINT || 'ws://10.0.0.12:9988';
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
