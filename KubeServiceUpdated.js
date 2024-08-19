@@ -8,8 +8,10 @@ const path = require('path');
 const https = require('https');
 require('dotenv').config();
 
-const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '';
-const NODE_RPC = process.env.RPC_ENDPOINT || 'ws://10.0.0.12:9988';
+const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
+const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
+const PUBLIC_IP = process.env.PUBLIC_IP || null; //should update on MasterSetup.sh
+const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSetup.sh if exists
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
@@ -231,6 +233,15 @@ async function listenToSubstrateEvents() {
   const wsProvider = new WsProvider(NODE_RPC);
   //const api = await ApiPromise.create();
   const api = await ApiPromise.create({ provider: wsProvider });
+  const entries = await api.query.edgeConnect.workerClusters.entries()
+  const thisWorker = entries.find(([key,value]) => {
+    let worker = value.toHuman()
+    const [domain] = worker.api.domain.split(':')
+    return domain === PUBLIC_IP || domain === DOMAIN_NAME
+  })
+  const workerId = thisWorker? thisWorker[1].toHuman().id : null
+  console.log("workerId: ", workerId)
+
   api.query.system
     .events((events) => {
       events.forEach((record) => {
@@ -244,14 +255,13 @@ async function listenToSubstrateEvents() {
           const [assigned_worker, task_owner, task_id, task] = event.data.map(
             (e) => e.toHuman()
           );
-          const worker_addr = assigned_worker[0];
+          const [worker_addr, worker_id] = assigned_worker;
           console.log({worker_addr, task_owner, task_id, task})
           console.log("Matches account check: ", worker_addr === WORKER_ADDRESS, worker_addr, WORKER_ADDRESS)
-          if (worker_addr == WORKER_ADDRESS) {
+          if (worker_addr == WORKER_ADDRESS && worker_id == workerId) {
             console.log("Matches account!")
             deploy(task_id, task);
           }
-          // deploy(task_id, task);
         }
       });
     })
