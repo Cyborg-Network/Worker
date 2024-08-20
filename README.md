@@ -50,21 +50,13 @@ sh WorkerSetup.sh <worker-name> <master-ip> <token>
 Replace <worker-name>, <master-ip>, and <token> with your specific details.
 
 
-### Deploying Applications
-With the cluster ready, you can now deploy applications using the Node.js API.
+### Check Cluster Status 
+With the cluster ready, you can now access them using the Node.js API.
 
-#### 1. Trigger Deployment via API
-Send a POST request to /deploy endpoint with the Docker image URL:
+#### 1. Check Deployment via API
+Send a Get request to /cluster-status endpoint to check that it's working:
 
 ```
-curl -X POST http://<master-node-ip>:3000/deploy \
--H "Content-Type: application/json" \
--d '{"imageUrl": your_public_docker_image}'
+curl -X GET "http://<master-node-ip>:3000/cluster-status"
 ```
-This request deploys the specified Docker image as a Kubernetes deployment and creates a NodePort service to expose it.
 
-#### 2. Accessing Deployments
-The API response includes the NodePort assigned to the service. Access your deployment using master node IP address and the provided NodePort:
-```
-http://<node-ip>:<NodePort>
-```
