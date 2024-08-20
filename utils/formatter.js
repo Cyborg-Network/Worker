@@ -15,10 +15,10 @@ const formatOutput = (output) => {
 
 const formatCpuOutput = (output) => {
     const cpuUsage = {};
-    const matches = output.match(/(\d+\.\d+)%id/);
+    const matches = output.match(/(\d+\.\d+) us/);
+    console.log(matches)
     if (matches) {
-        const idle = parseFloat(matches[1]);
-        cpuUsage.usage = (100 - idle).toFixed(2) + '%';
+        cpuUsage.usage = parseFloat(matches[0]).toFixed(2) + '%';
     }
     return cpuUsage;
 }
