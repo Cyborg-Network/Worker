@@ -15,14 +15,18 @@ const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSe
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
+const { readJsonFile, writeJsonFile } = require('./utils/fileUtil')
+
+const filePath = path.join(process.cwd(), 'deploymentsMap.json');
 
 app.use(express.json());
-
 app.use(cors({
   origin: ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8000/cyborg-connect', 'http://localhost:8000/cyborg-connect', 'https://cyborg-network.github.io', 'https://cyborg-network.github.io/cyborg-connect']
 }));
 
-const deploymentMap = {};
+const jsonDeploymentData = readJsonFile(filePath);
+console.log('Read jsonDeploymentData:', jsonDeploymentData);
+const deploymentMap = jsonDeploymentData || {};
 
 // Kubernetes Client setup
 const kc = new k8s.KubeConfig();
@@ -38,6 +42,7 @@ function deploy(taskId, imageUrl) {
     .toString(36)
     .substring(7)}`;
   deploymentMap[taskId] = deploymentName;
+  writeJsonFile(filePath, deploymentMap);
 
   const filenameBase = deploymentName.replace(/[^a-zA-Z0-9-]/g, "");
 
@@ -100,11 +105,6 @@ app.get("/cluster-status", (req, res) => {
   });
 });
 
-// app.get("/deployment-status/:taskId", async (req, res) => {
-//   console.log("taskId: ", req.params)
-//   const { taskId } = req.params;
-//   console.log("taskId1: ", taskId)
-
 app.get("/deployment-status/:taskId", async (req, res) => {
   const { taskId } = req.params;
   console.log("taskId1: ", taskId);
@@ -148,24 +148,10 @@ app.get("/logs/:taskId", async (req, res) => {
     }
 
     const command = `kubectl logs -l app=${deploymentName} --all-containers=true --tail=100`;
-    const logStream = exec(command, (error, stdout, stderr) => {
-      console.log(`stdout: ${stdout}`);
-      if (error) {
-        console.error(`exec error: ${error}`);
-      } else {
-        console.log(`stdout: ${stdout}`);
-        console.error(`stderr: ${stderr}`);
-      }
-    });
+    const data = await executeCommand(command)
+    console.log("testing:: ", data)
+    res.json(data);
 
-    const test = await executeCommand(command)
-    console.log("testing:: ", test)
-
-    logStream.stdout.pipe(res);
-    logStream.on("error", (error) => {
-      console.error("Error streaming logs:", error);
-      res.status(500).send({ error: "Failed to stream logs" });
-    });
   } catch (error) {
     console.error("Error fetching deployment:", error);
     res.status(500).send({ error: "Failed to fetch deployment" });
