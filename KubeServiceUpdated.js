@@ -9,7 +9,7 @@ const https = require('https');
 require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
-const NODE_RPC = process.env.RPC_ENDPOINT || 'wss:///127.0.0.1:9988'; //defaults to hosted chain
+const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://127.0.0.1:9988'; //defaults to hosted chain
 const PUBLIC_IP = process.env.PUBLIC_IP || null; // You might need to set this appropriately for Minikube
 const DOMAIN_NAME = process.env.DOMAIN_NAME || null; // You might need to set this appropriately for Minikube
 
