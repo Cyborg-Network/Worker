@@ -30,7 +30,7 @@ fi
 # Clone the GitHub repository
 # Replace the following URL with the repository you want to clone
 REPO_URL="https://github.com/Cyborg-Network/Worker.git"
-TARGET_DIR="/Worker"
+TARGET_DIR="/home/azureuser/Worker"
 
 # Check if the target directory already exists
 if [ -d "$TARGET_DIR" ]; then
