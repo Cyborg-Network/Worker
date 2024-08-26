@@ -12,6 +12,7 @@ const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57
 const NODE_RPC = process.env.RPC_ENDPOINT || 'ws://127.0.0.1:9988'; //defaults to hosted chain
 const PUBLIC_IP = process.env.PUBLIC_IP || null; // You might need to set this appropriately for Minikube
 const DOMAIN_NAME = process.env.DOMAIN_NAME || null; // You might need to set this appropriately for Minikube
+const WORKER_ID = process.env.WORKER_ID || null;
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
@@ -222,9 +223,10 @@ async function listenToSubstrateEvents() {
   const thisWorker = entries.find(([key,value]) => {
     let worker = value.toHuman()
     const [domain] = worker.api.domain.split(':')
+    console.log("fetched worker: ", worker)
     return domain === PUBLIC_IP || domain === DOMAIN_NAME
   })
-  const workerId = thisWorker? thisWorker[1].toHuman().id : null
+  const workerId = WORKER_ID || (thisWorker? thisWorker[1].toHuman().id : null)
   console.log("workerId: ", workerId)
 
   api.query.system
