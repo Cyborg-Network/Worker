@@ -9,9 +9,9 @@ const https = require('https');
 require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
-const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
-const PUBLIC_IP = process.env.PUBLIC_IP || null; //should update on MasterSetup.sh
-const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSetup.sh if exists
+const NODE_RPC = process.env.RPC_ENDPOINT || 'ws://127.0.0.1:9988'; //defaults to hosted chain
+const PUBLIC_IP = process.env.PUBLIC_IP || null; // You might need to set this appropriately for Minikube
+const DOMAIN_NAME = process.env.DOMAIN_NAME || null; // You might need to set this appropriately for Minikube
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
@@ -28,10 +28,9 @@ const jsonDeploymentData = readJsonFile(filePath);
 console.log('Read jsonDeploymentData:', jsonDeploymentData);
 const deploymentMap = jsonDeploymentData || {};
 
-// Kubernetes Client setup
+// Kubernetes Client setup (adapted for Minikube)
 const kc = new k8s.KubeConfig();
-const kubeconfigPath = "/etc/rancher/k3s/k3s.yaml";
-kc.loadFromFile(kubeconfigPath);
+kc.loadFromDefault(); // Load the default kubeconfig 
 const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const k8sAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
 
@@ -206,10 +205,10 @@ app.get('/consumption-metrics', async (req, res) => {
     specs.diskUsage = formatDiskOutput(diskUse.trim())
 
     res.json(specs);
-  } catch (error) {
+  } catch (error) { // The only catch block needed
       console.error('Error:', error);
       res.status(500).json({ error: 'Internal Server Error' });
-  }
+  } 
 });
 
 async function listenToSubstrateEvents() {
