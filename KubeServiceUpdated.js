@@ -12,6 +12,7 @@ const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57
 const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
 const PUBLIC_IP = process.env.PUBLIC_IP || null; //should update on MasterSetup.sh
 const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSetup.sh if exists
+// const WORKER_ID = process.env.WORKER_ID || null;
 
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = require("./utils/formatter")
