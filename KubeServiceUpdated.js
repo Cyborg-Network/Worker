@@ -63,6 +63,15 @@ cron.schedule('0 */12 * * *', async () => { // Clean up will run every 12 hours
   }
 });
 
+function cleanUpFiles(files) {
+  // Function to clean up specified files
+  files.forEach((file) => {
+    if (fs.existsSync(file)) {
+      fs.unlinkSync(file);
+    }
+  });
+}
+
 function deploy(taskId, imageUrl) {
   console.log("taskId:", taskId);
   console.log("imageUrl:", imageUrl);
@@ -117,9 +126,27 @@ function deploy(taskId, imageUrl) {
     (error, stdout, stderr) => {
       if (error) {
         console.error(`exec error: ${error}`);
+        cleanUpFiles([deploymentFile, serviceFile]); // Clean up files on error
+        return res.status(500).send({ error: 'Deployment or Service creation failed' });
       } else {
+
+        let nodePort;
+        try {
+          const getServiceCommand = `kubectl get svc ${deploymentName}-service -o=jsonpath='{.spec.ports[0].nodePort}'`;
+          nodePort = execSync(getServiceCommand).toString().trim();
+        } catch (err) {
+          console.error('Error fetching NodePort:', err);
+          cleanUpFiles([deploymentFile, serviceFile]); // Clean up files if NodePort retrieval fails
+          return res.status(500).send({ error: 'Failed to fetch NodePort' });
+        }
+
         console.log(`stdout: ${stdout}`);
         console.error(`stderr: ${stderr}`);
+
+        // Clean up files after successful deployment
+        cleanUpFiles([deploymentFile, serviceFile]);
+
+        res.send({ message: `Deployment ${deploymentName} and Service created`, nodePort });
       }
     }
   );
