@@ -5,7 +5,7 @@ const k8s = require("@kubernetes/client-node");
 const app = express();
 const cors = require('cors');
 const path = require('path');
-const https = require('https');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
@@ -34,6 +34,34 @@ const kubeconfigPath = "/etc/rancher/k3s/k3s.yaml";
 kc.loadFromFile(kubeconfigPath);
 const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 const k8sAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
+
+cron.schedule('0 */12 * * *', async () => { // Clean up will run every 12 hours
+  console.log('Entering clean up job...');
+  if (deploymentMap) {
+    try {
+      const deploymentCount = await executeCommand(`kubectl get deployments --no-headers | wc -l`)
+      if (parseInt(deploymentCount) < 3) {
+        console.info("Exiting: less than 3 deployments in worker")
+        return
+      }
+      const deployemntsInOrder = Object.keys(deploymentMap)
+      .sort((a, b) => parseInt(a) - parseInt(b))
+      .map(key => deploymentMap[key]);
+
+      const lastDeployed = deployemntsInOrder.pop()
+      console.log('lastDeployed: ', lastDeployed);
+
+      const command = `kubectl get deployments --all-namespaces -o custom-columns=":metadata.name" | grep "^dynamic" | grep -v "${lastDeployed}" | xargs kubectl delete deployment`
+      
+      console.log("Running clean up on deployments")
+      const result = await executeCommand(command)
+      console.log("Clean up result:: ", result)
+
+    } catch (err) {
+      console.error(err.message)
+    }
+  }
+});
 
 function deploy(taskId, imageUrl) {
   console.log("taskId:", taskId);
