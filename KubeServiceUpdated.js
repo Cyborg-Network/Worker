@@ -22,7 +22,7 @@ const filePath = path.join(process.cwd(), 'deploymentsMap.json');
 
 app.use(express.json());
 app.use(cors({
-  origin: ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8000/cyborg-connect', 'http://localhost:8000/cyborg-connect', 'https://cyborg-network.github.io', 'https://cyborg-network.github.io/cyborg-connect']
+  origin: ['https://demo.cyborgnetwork.io', 'http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:8000/cyborg-connect', 'http://localhost:8000/cyborg-connect', 'https://cyborg-network.github.io', 'https://cyborg-network.github.io/cyborg-connect']
 }));
 
 const jsonDeploymentData = readJsonFile(filePath);
