@@ -122,14 +122,15 @@ Send a Get request to /cluster-status endpoint to check that it's working:
 curl -X GET "http://<master-node-ip>:3000/cluster-status"
 ```
 
-## Dev Workflow
+## Alternative Workflow (Minikube)
 
-The developemnt workflow uses minikube to simular a Worker cluster.
+This is an alternative workflow useing minikube to simulate a Worker cluster.
 
 ### Prerequisites Setup
-    - [Install Minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fbinary+download)
-    - Install Docker
-    - Install Docker-compose
+- [Install Minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fbinary+download)
+- Install Docker
+- Install Docker-compose
+
 ### Usage
 
 Checkout the branch
