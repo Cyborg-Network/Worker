@@ -7,7 +7,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "env:local":"sudo cp .env.example .env && sudo sh ip-env-setup.sh private",
+    "env:dev":"sudo cp .env.example .env && sudo sh ip-env-setup.sh public",
+    "setup:local": "npm run env:local && sudo sh MasterSetup.sh",
+    "setup:dev": "npm run env:dev && sudo sh MasterSetup.sh",
     "dev": "nodemon KubeServiceUpdated.js",
     "pm2:start": "pm2 start npm --name 'cluster-one' -- run dev",
     "pm2:stop": "pm2 stop 'cluster-one'",
