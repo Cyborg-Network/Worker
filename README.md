@@ -45,7 +45,17 @@ Take a look at `.env.example`:
 
 These values can be manually customized if you know them already. Otherwise the scripts below will automate this setup process. Keep in mind the scripts are configured for an Ubuntu Linux machine. Using the setup scripts on other machines may introduce errors.
 
-The `RPC_ENDPOINT` is defaulted to localhost at port `9988` which is the typical zombienet RPC endpoint for a parachain. The example `WORKER_ADDRESS` is set to the Alice default test account. 
+[`Note:`] `RPC_ENDPOINT` defaults to the hosted Cyborg Chain's endpoint. If you are running Cyborg Node locally (not on vm), update the RPC_ENDPOINT to `ws://<your-local-pc-ip-address>:9988`. Port `9988` is typical for zombienet parachain port. If you are using a different port for the Cyborg Node, please also update this port.
+
+You can fetch your local IP address (`<your-local-pc-ip-address>`) of your computer on the network using:
+
+```bash
+ipconfig getifaddr en0
+```
+
+If your Cyborg Node is running on a VM, replace (`<your-local-pc-ip-address>`) with the ip address of the VM
+
+The example `WORKER_ADDRESS` is set to the Alice default test account. 
 
 If you decide to run the worker locally within a local network, use this command:
 ```
@@ -54,7 +64,7 @@ npm run setup:local
 If you decide to setup your worker on a remote machine, use this command:
 ```
 npm run setup:dev
-``` 
+```
 
 This command creates a `.env` with the neccessary variables to run the worker properly. You can already edit the `.env` manually afterwards depending on your setup preference. The last command in the setup script will install your k3s cluster master node. You can always run the MasterSetup.sh again to retrieve a worker node join token (`k3s-node-token.txt`). You will need this token to connect a k3s worker node to the k3s master.
 

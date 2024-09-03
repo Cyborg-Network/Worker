@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
 const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
-const PUBLIC_IP = process.env.PUBLIC_IP || null; //should update on MasterSetup.sh
+const IP_ADDRESS = process.env.IP_ADDRESS || null; //should update on MasterSetup.sh
 const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSetup.sh if exists
 // const WORKER_ID = process.env.WORKER_ID || null;
 
@@ -252,7 +252,7 @@ async function listenToSubstrateEvents() {
   const thisWorker = entries.find(([key,value]) => {
     let worker = value.toHuman()
     const [domain] = worker.api.domain.split(':')
-    return domain === PUBLIC_IP || domain === DOMAIN_NAME
+    return domain === IP_ADDRESS || domain === DOMAIN_NAME
   })
   const workerId = thisWorker? thisWorker[1].toHuman().id : null
   console.log("workerId: ", workerId)
