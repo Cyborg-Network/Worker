@@ -9,7 +9,7 @@ const cron = require('node-cron');
 require('dotenv').config();
 
 const WORKER_ADDRESS = process.env.WORKER_ADDRESS || '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'; //defaults to alice
-const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
+const NODE_RPC = process.env.RPC_ENDPOINT || 'wss://fraa-flashbox-4478-rpc.a.stagenet.tanssi.network'; //defaults to hosted chain
 const IP_ADDRESS = process.env.IP_ADDRESS || null; //should update on MasterSetup.sh
 const DOMAIN_NAME = process.env.DOMAIN_NAME || null; //should update on MasterSetup.sh if exists
 // const WORKER_ID = process.env.WORKER_ID || null;
@@ -243,8 +243,7 @@ app.get('/consumption-metrics', async (req, res) => {
 
 async function listenToSubstrateEvents() {
   console.log("Calling this now");
-  // const wsProvider = new WsProvider("wss://fraa-flashbox-3239-rpc.a.stagenet.tanssi.network");
-  console.log('node: ',NODE_RPC)
+  console.log('node: ',NODE_RPC);
   const wsProvider = new WsProvider(NODE_RPC);
   //const api = await ApiPromise.create();
   const api = await ApiPromise.create({ provider: wsProvider });
