@@ -1,5 +1,5 @@
 const express = require("express");
-const { exec } = require("child_process");
+const { exec, execSync } = require("child_process");
 const fs = require("fs");
 const k8s = require("@kubernetes/client-node");
 const app = express();
@@ -19,6 +19,7 @@ const { formatOutput, formatMemOutput, formatDiskOutput, formatCpuOutput } = req
 const { readJsonFile, writeJsonFile } = require('./utils/fileUtil')
 
 const filePath = path.join(process.cwd(), 'deploymentsMap.json');
+const CYBORG_CONFIG_PATH = './cyborg-agent-config.json';
 
 app.use(express.json());
 app.use(cors({
@@ -64,9 +65,35 @@ cron.schedule('0 */12 * * *', async () => { // Clean up will run every 12 hours
   }
 });
 
-function deploy(taskId, imageUrl) {
+function deploy(taskId, imageUrl, workerOwner, taskOwner) {
   console.log("taskId:", taskId);
   console.log("imageUrl:", imageUrl);
+  console.log("taskOwner:", taskOwner);
+
+  const cyborgConfigDir = path.dirname(CYBORG_CONFIG_PATH);
+
+  if (!fs.existsSync(cyborgConfigDir)) {
+    execSync(`sudo mkdir -p ${cyborgConfigDir}`);
+  }
+
+  if (!fs.existsSync(CYBORG_CONFIG_PATH)) {
+    execSync(`sudo touch ${CYBORG_CONFIG_PATH}`);
+  }
+
+  const configData = {
+    worker_owner: workerOwner,
+    task_owner: taskOwner
+  };
+
+  const command = `echo '${JSON.stringify(configData, null, 2)}' | sudo tee ${CYBORG_CONFIG_PATH} > /dev/null`;
+
+  try {
+    execSync(command);
+    console.log(`Configuration written to ${CYBORG_CONFIG_PATH}`);
+  } catch (error) {
+    console.error(`Error writing to ${CYBORG_CONFIG_PATH}:`, error.message);
+  }
+
   const deploymentName = `dynamic-deployment-${Math.random()
     .toString(36)
     .substring(7)}`;
@@ -274,7 +301,7 @@ async function listenToSubstrateEvents() {
           console.log("Matches account check: ", worker_addr === WORKER_ADDRESS, worker_addr, WORKER_ADDRESS)
           if (worker_addr == WORKER_ADDRESS && worker_id == workerId) {
             console.log("Matches account!")
-            deploy(task_id, task);
+            deploy(task_id, task, worker_addr, task_owner);
           }
         }
       });
